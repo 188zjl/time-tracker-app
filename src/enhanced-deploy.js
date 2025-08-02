@@ -51,12 +51,6 @@ async function handleLogin(request, env) {
   const username = formData.get('username');
   const password = formData.get('password');
   
-  console.log('--- Auth Attempt ---');
-  console.log('Username from env:', env.AUTH_USERNAME);
-  console.log('Password from env:', env.AUTH_PASSWORD ? 'Set' : 'Not Set');
-  console.log('Username from form:', username);
-  console.log('Password from form:', password ? 'Set' : 'Not Set');
-
   if (username === env.AUTH_USERNAME && password === env.AUTH_PASSWORD) {
     const token = crypto.randomUUID();
     await env.TIME_TRACKER_KV.put('auth_token', token, { expirationTtl: 86400 });
@@ -75,7 +69,16 @@ async function handleLogin(request, env) {
   });
 }
 
-function handleLogout() {
+function handleLogout(request) {
+  if (request.method === 'POST') {
+    return new Response(JSON.stringify({ success: true }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': 'auth_token=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'
+      }
+    });
+  }
+  // Fallback for GET requests
   return new Response(null, {
     status: 302,
     headers: {
@@ -333,8 +336,17 @@ function getMainHTML() {
             setInterval(updateStats, 60000);
         };
 
-        function logout() {
-            window.location.href = '/logout';
+        async function logout() {
+            try {
+                const response = await fetch('/logout', { method: 'POST' });
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    console.error('Logout failed');
+                }
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
         }
 
         function loadState() {

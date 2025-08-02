@@ -51,6 +51,12 @@ async function handleLogin(request, env) {
   const username = formData.get('username');
   const password = formData.get('password');
   
+  console.log('--- Auth Attempt ---');
+  console.log('Username from env:', env.AUTH_USERNAME);
+  console.log('Password from env:', env.AUTH_PASSWORD ? 'Set' : 'Not Set');
+  console.log('Username from form:', username);
+  console.log('Password from form:', password ? 'Set' : 'Not Set');
+
   if (username === env.AUTH_USERNAME && password === env.AUTH_PASSWORD) {
     const token = crypto.randomUUID();
     await env.TIME_TRACKER_KV.put('auth_token', token, { expirationTtl: 86400 });

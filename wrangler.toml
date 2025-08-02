@@ -1,0 +1,20 @@
+name = "time-tracker"
+main = "src/enhanced-deploy.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespace bindings
+[[kv_namespaces]]
+binding = "TIME_TRACKER_KV"
+id = "90ffd37e39ad4f718b3bc5cac8f56f08"
+preview_id = "3acc41467b214702a2c6ca71ea582941"
+
+# 添加调试日志
+[env.development]
+vars = { DEBUG = "true" }
+
+[site]
+bucket = "./public"
+
+# 添加构建命令
+[build]
+command = ""

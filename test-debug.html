@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间追踪器 - 调试测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">时间追踪器调试测试</h1>
+        
+        <div class="space-y-4">
+            <!-- 测试 1: Web Worker 支持 -->
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="font-semibold mb-2">测试 1: Web Worker 支持</h2>
+                <div id="worker-test" class="text-sm"></div>
+            </div>
+            
+            <!-- 测试 2: localStorage 持久化 -->
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="font-semibold mb-2">测试 2: localStorage 持久化</h2>
+                <button onclick="testLocalStorage()" class="bg-blue-500 text-white px-4 py-2 rounded">测试存储</button>
+                <div id="storage-test" class="text-sm mt-2"></div>
+            </div>
+            
+            <!-- 测试 3: 时区处理 -->
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="font-semibold mb-2">测试 3: 时区处理</h2>
+                <div id="timezone-test" class="text-sm"></div>
+            </div>
+            
+            <!-- 测试 4: API 连接 -->
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="font-semibold mb-2">测试 4: API 连接（需要运行 Workers）</h2>
+                <button onclick="testAPI()" class="bg-green-500 text-white px-4 py-2 rounded">测试 API</button>
+                <div id="api-test" class="text-sm mt-2"></div>
+            </div>
+            
+            <!-- 测试 5: 计时器精度 -->
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="font-semibold mb-2">测试 5: 计时器精度</h2>
+                <button onclick="startTimerTest()" class="bg-purple-500 text-white px-4 py-2 rounded">开始计时测试</button>
+                <div id="timer-test" class="text-sm mt-2"></div>
+            </div>
+        </div>
+        
+        <!-- 日志输出 -->
+        <div class="mt-8 bg-black text-green-400 p-4 rounded font-mono text-xs">
+            <h3 class="text-white mb-2">调试日志：</h3>
+            <div id="debug-log" class="space-y-1 max-h-64 overflow-y-auto"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 日志函数
+        function log(message, data = null) {
+            const logDiv = document.getElementById('debug-log');
+            const entry = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}${data ? ' - ' + JSON.stringify(data) : ''}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // 测试 1: Web Worker
+        function testWebWorker() {
+            const result = document.getElementById('worker-test');
+            
+            try {
+                const workerCode = `
+                    self.onmessage = function(e) {
+                        self.postMessage('Worker 响应: ' + e.data);
+                    };
+                `;
+                
+                const blob = new Blob([workerCode], { type: 'application/javascript' });
+                const worker = new Worker(URL.createObjectURL(blob));
+                
+                worker.onmessage = function(e) {
+                    result.innerHTML = '<span class="text-green-600">✓ Web Worker 支持正常</span>';
+                    log('Web Worker 测试成功', e.data);
+                    worker.terminate();
+                };
+                
+                worker.onerror = function(error) {
+                    result.innerHTML = '<span class="text-red-600">✗ Web Worker 错误</span>';
+                    log('Web Worker 错误', error.message);
+                };
+                
+                worker.postMessage('测试消息');
+            } catch (error) {
+                result.innerHTML = '<span class="text-red-600">✗ Web Worker 不支持</span>';
+                log('Web Worker 初始化失败', error.message);
+            }
+        }
+        
+        // 测试 2: localStorage
+        function testLocalStorage() {
+            const result = document.getElementById('storage-test');
+            
+            try {
+                const testData = {
+                    id: Date.now().toString(),
+                    name: '测试任务',
+                    startTime: new Date().toISOString(),
+                    testTime: new Date().toLocaleString()
+                };
+                
+                // 存储
+                localStorage.setItem('test_task', JSON.stringify(testData));
+                log('存储测试数据', testData);
+                
+                // 读取
+                const retrieved = JSON.parse(localStorage.getItem('test_task'));
+                
+                if (retrieved && retrieved.id === testData.id) {
+                    result.innerHTML = '<span class="text-green-600">✓ localStorage 工作正常</span>';
+                    log('读取测试数据成功', retrieved);
+                    
+                    // 清理
+                    localStorage.removeItem('test_task');
+                } else {
+                    result.innerHTML = '<span class="text-red-600">✗ 数据不匹配</span>';
+                    log('数据验证失败');
+                }
+            } catch (error) {
+                result.innerHTML = '<span class="text-red-600">✗ localStorage 错误</span>';
+                log('localStorage 测试失败', error.message);
+            }
+        }
+        
+        // 测试 3: 时区
+        function testTimezone() {
+            const result = document.getElementById('timezone-test');
+            
+            const now = new Date();
+            const utc = now.toISOString();
+            const local = now.toLocaleString();
+            const offset = now.getTimezoneOffset();
+            
+            result.innerHTML = `
+                <div>UTC 时间: ${utc}</div>
+                <div>本地时间: ${local}</div>
+                <div>时区偏移: ${-offset/60} 小时</div>
+                <div class="text-green-600">✓ 时区检测正常</div>
+            `;
+            
+            log('时区信息', {
+                utc,
+                local,
+                offsetMinutes: offset,
+                offsetHours: -offset/60
+            });
+        }
+        
+        // 测试 4: API
+        async function testAPI() {
+            const result = document.getElementById('api-test');
+            result.innerHTML = '<span class="text-yellow-600">测试中...</span>';
+            
+            try {
+                const response = await fetch('/api/current');
+                const data = await response.json();
+                
+                result.innerHTML = '<span class="text-green-600">✓ API 连接成功</span>';
+                log('API 响应', { status: response.status, data });
+            } catch (error) {
+                result.innerHTML = '<span class="text-red-600">✗ API 连接失败（确保 Workers 正在运行）</span>';
+                log('API 错误', error.message);
+            }
+        }
+        
+        // 测试 5: 计时器精度
+        let timerInterval;
+        let startTime;
+        
+        function startTimerTest() {
+            const result = document.getElementById('timer-test');
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                result.innerHTML = '计时器已停止';
+                log('计时器测试停止');
+                return;
+            }
+            
+            startTime = Date.now();
+            let ticks = 0;
+            
+            timerInterval = setInterval(() => {
+                ticks++;
+                const elapsed = Date.now() - startTime;
+                const expectedElapsed = ticks * 1000;
+                const drift = elapsed - expectedElapsed;
+                
+                result.innerHTML = `
+                    <div>运行时间: ${(elapsed/1000).toFixed(1)}秒</div>
+                    <div>预期时间: ${(expectedElapsed/1000).toFixed(1)}秒</div>
+                    <div>偏差: ${drift}ms</div>
+                    <div class="${Math.abs(drift) < 50 ? 'text-green-600' : 'text-yellow-600'}">
+                        ${Math.abs(drift) < 50 ? '✓ 精度良好' : '⚠ 精度一般'}
+                    </div>
+                `;
+                
+                if (ticks % 5 === 0) {
+                    log('计时器精度', { elapsed, drift });
+                }
+            }, 1000);
+        }
+        
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            log('开始调试测试');
+            testWebWorker();
+            testTimezone();
+        };
+    </script>
+</body>
+</html>

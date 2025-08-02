@@ -51,7 +51,7 @@ async function handleLogin(request, env) {
   const username = formData.get('username');
   const password = formData.get('password');
   
-  if (username === 'admin' && password === 'wearefamily114514') {
+  if (username === env.AUTH_USERNAME && password === env.AUTH_PASSWORD) {
     const token = crypto.randomUUID();
     await env.TIME_TRACKER_KV.put('auth_token', token, { expirationTtl: 86400 });
     

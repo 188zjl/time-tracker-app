@@ -52,6 +52,21 @@
 - **日志位置**：时间相关的所有操作
 - **验证**：检查存储的 UTC 时间和显示的本地时间
 
+## 安全配置 (重要)
+
+为了保护您的凭据安全，该应用使用 Cloudflare Workers 的环境变量进行身份验证，而不是将密码硬编码在代码中。
+
+**请在 Cloudflare Dashboard 中设置以下环境变量：**
+
+1.  登录到您的 Cloudflare 账户并导航到 Workers & Pages。
+2.  选择 `time-tracker` Worker。
+3.  进入 **Settings** -> **Variables**。
+4.  添加以下两个环境变量：
+    *   **`AUTH_USERNAME`**: 您的登录用户名 (例如：`admin`)
+    *   **`AUTH_PASSWORD`**: 您的登录密码 (例如：`wearefamily114514`)
+
+**注意**: 请务必使用强密码，并定期更换。
+
 ## 部署步骤
 
 1. **安装依赖**：

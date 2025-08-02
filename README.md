@@ -1,5 +1,7 @@
 # 时间追踪应用
 
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/188zjl/time-tracker-app)
+
 一个部署在 Cloudflare Workers 上的极简时间追踪应用，具有持久化计时器和可视化日历功能。
 
 ## 功能特点
